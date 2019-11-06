@@ -75,6 +75,11 @@ bool isCorrect(std::string &s) {
 	removeWhiteSymbols(s);
 	pointToDot(s);
 
+	if (!checkBrackets(s))
+		return false;
+
+	//TODO No symbol '*' near to brackets - need to add it for processing
+
 
 	for (char c : s)
 		if (LEGAL_CHARACTERS.find(c) == std::string::npos)
@@ -94,7 +99,7 @@ bool isCorrect(std::string &s) {
 			pointUsed = false;
 			wasBracket = false;
 		} else if (isBracket(c)) {
-			//TODO (( moze byc, a nie dziala || ilosc nawiasow otwierajacych musi byc rowna liczbie nawiasow zamykajacych
+			//TODO one more possibility: ((
 			if (wasBracket)
 				return false;
 			wasOperator = false;
@@ -158,6 +163,19 @@ bool isNumberPart(char &c) { return isDigit(c) || c == '.'; }
 bool isOperator(char &c) { return (c == '/') || (c == '*') || (c == '-') || (c == '+'); }
 
 bool isBracket(char &c) { return (c == '(') || (c == ')'); }
+
+//number of '(' equals number of ')'
+bool checkBrackets(std::string &equation) {
+	int counter = 0;
+
+	for (char c : equation)
+		if (c == '(')
+			counter++;
+		else if (c == ')')
+			counter--;
+
+	return counter == 0;
+}
 
 int lastNumberIndex(std::string &s, int start) {
 	int i = start;
