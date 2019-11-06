@@ -21,11 +21,16 @@ bool isOperator(char &c);
 
 bool isBracket(char &c);
 
+int lastNumberIndex(std::string &s, int start);
+
+void display(std::vector<std::string> &s);
+
 int main() {
 	std::string s = "(2,05/31+4)*2";
 	std::cout << s;
 	std::cout << "	" << isCorrect(s) << std::endl;
-
+	std::vector<std::string> v = prepareDataStructures(s);
+	display(v);
 	/*s = " 4 *    a";
 	std::cout << s;
 	std::cout << "	" << isCorrect(s) << std::endl;
@@ -89,6 +94,7 @@ bool isCorrect(std::string &s) {
 			pointUsed = false;
 			wasBracket = false;
 		} else if (isBracket(c)) {
+			//TODO (( moze byc, a nie dziala || ilosc nawiasow otwierajacych musi byc rowna liczbie nawiasow zamykajacych
 			if (wasBracket)
 				return false;
 			wasOperator = false;
@@ -124,8 +130,23 @@ std::string reversePolishNotation(std::string &equation) {
 
 std::vector<std::string> prepareDataStructures(std::string &equation) {
 	std::vector<std::string> items{};
+	char c;
+	std::string number{};
 
-	//opers
+	for (int i = 0; i < equation.length(); i++) {
+		c = equation[i];
+		if (isBracket(c) || isOperator(c)) {
+			number = equation.substr(i, 1);
+			//std::cout << c << std::endl;
+			items.push_back(number);
+		}
+		else if (isNumberPart(c)) {
+			number = equation.substr(i, lastNumberIndex(equation, i) - i + 1);
+			//std::cout << number << std::endl;
+			i = lastNumberIndex(equation, i);
+			items.push_back(number);
+		}
+	}
 
 	return items;
 }
@@ -146,4 +167,10 @@ int lastNumberIndex(std::string &s, int start) {
 			break;
 
 	return --i;
+}
+
+void display(std::vector<std::string> &s)
+{
+	for (std::vector<std::string>::iterator i = s.begin(); i != s.end(); i++)
+		std::cout << *i << std::endl;
 }
