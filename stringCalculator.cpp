@@ -9,7 +9,7 @@ bool isCorrect(std::string &s);
 
 void resolve(std::string &equation);
 
-std::string reversePolishNotation(std::string &equation);
+std::vector<std::string> reversePolishNotation(std::vector<std::string> &equationItems);
 
 std::vector<std::string> prepareDataStructures(std::string &equation);
 
@@ -19,7 +19,15 @@ bool isNumberPart(char &c);
 
 bool isOperator(char &c);
 
+bool checkBrackets(std::string &equation);
+
 bool isBracket(char &c);
+
+bool isOpeningBracket(char c);
+
+bool isClosingBracket(char c);
+
+int priority(char c);
 
 int lastNumberIndex(std::string &s, int start);
 
@@ -30,6 +38,8 @@ int main() {
 	std::cout << s;
 	std::cout << "	" << isCorrect(s) << std::endl;
 	std::vector<std::string> v = prepareDataStructures(s);
+	//display(v);
+	v = reversePolishNotation(v);
 	display(v);
 	/*s = " 4 *    a";
 	std::cout << s;
@@ -75,26 +85,38 @@ bool isCorrect(std::string &s) {
 	removeWhiteSymbols(s);
 	pointToDot(s);
 
-	if (!checkBrackets(s))
+	if (!checkBrackets(s)) {
+		std::cout << "U probably should check brackets, bro. :D" << std::endl;
 		return false;
+	}
+
+	//replace '\' with '/'
+
+	//replace big minus with -
 
 	//TODO No symbol '*' near to brackets - need to add it for processing
 
 
 	for (char c : s)
-		if (LEGAL_CHARACTERS.find(c) == std::string::npos)
+		if (LEGAL_CHARACTERS.find(c) == std::string::npos) {
+			std::cout << "Illegal character... Focus!" << std::endl;
 			return false;
+		}
 		else if (isNumberPart(c)) {
 			if (c == '.') {
-				if (pointUsed)
+				if (pointUsed) {
+					std::cout << "Two points in one number? Wtf, man?" << std::endl;
 					return false;
+				}
 				pointUsed = true;
 			}
 			wasOperator = false;
 			wasBracket = false;
 		} else if (isOperator(c)) {
-			if (wasOperator)
+			if (wasOperator) {
+				std::cout << "Two consecutive operators?! C'mon..." << std::endl;
 				return false;
+			}
 			wasOperator = true;
 			pointUsed = false;
 			wasBracket = false;
@@ -121,13 +143,39 @@ void resolve(std::string &equation) {
 
 }
 
-std::string reversePolishNotation(std::string &equation) {
-	std::string out = "";
+std::vector<std::string> reversePolishNotation(std::vector<std::string> &equationItems) {
+	std::vector<std::string> out{}, stack{};
+	std::string item;
+	char c;
 
-	for (char c : equation) {
-		//if
+	for (std::vector<std::string>::iterator i = equationItems.begin();
+			i != equationItems.end();
+			i++) {
+		c = (*i)[0];
+		if (isNumberPart(c))
+			out.push_back(*i);
+		else if (isOpeningBracket(c))
+			stack.push_back(*i);
+		else if (isOperator(c)) {
+			while ((!stack.empty()) && (priority(c) <= priority(stack.back()[0]))) {
+				out.push_back(stack.back());
+				stack.pop_back();
+			}
+			stack.push_back(*i);
+		}
+		else if (isClosingBracket(c)) {
+			while ((!stack.empty()) && (!isOpeningBracket(stack.back()[0]))) {
+				out.push_back(stack.back());
+				stack.pop_back();
+			}
+			stack.pop_back();
+		}
+	}
 
-		out += c;
+	for (std::vector<std::string>::iterator i = stack.begin();
+		i != stack.end();
+		i++) {
+		out.push_back(*i);
 	}
 
 	return out;
@@ -138,7 +186,7 @@ std::vector<std::string> prepareDataStructures(std::string &equation) {
 	char c;
 	std::string number{};
 
-	for (int i = 0; i < equation.length(); i++) {
+	for (size_t i{}; i < equation.length(); i++) {
 		c = equation[i];
 		if (isBracket(c) || isOperator(c)) {
 			number = equation.substr(i, 1);
@@ -160,9 +208,25 @@ bool isDigit(char &c) { return (c >= '0') && (c <= '9'); }
 
 bool isNumberPart(char &c) { return isDigit(c) || c == '.'; }
 
+int priority(char c) {
+	if ((c == '-') || (c == '+'))
+		return 0;
+	else if ((c == '*') || (c == '/'))
+		return 1;
+	else if (c == '^')
+		return 2;
+
+	return -1;
+}
+
+//to replace with string
 bool isOperator(char &c) { return (c == '/') || (c == '*') || (c == '-') || (c == '+'); }
 
-bool isBracket(char &c) { return (c == '(') || (c == ')'); }
+bool isBracket(char &c) { return isOpeningBracket(c) || isClosingBracket(c); }
+
+bool isOpeningBracket(char c) { return c == '('; }
+
+bool isClosingBracket(char c) { return c == ')'; }
 
 //number of '(' equals number of ')'
 bool checkBrackets(std::string &equation) {
@@ -178,7 +242,7 @@ bool checkBrackets(std::string &equation) {
 }
 
 int lastNumberIndex(std::string &s, int start) {
-	int i = start;
+	size_t i = start;
 	
 	for (; i < s.length(); i++)
 		if (!isNumberPart(s[i]))
