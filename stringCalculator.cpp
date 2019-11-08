@@ -33,14 +33,18 @@ int lastNumberIndex(std::string &s, int start);
 
 void display(std::vector<std::string> &s);
 
+double calculate(double number1, double number2, char operation);
+
 int main() {
-	std::string s = "(2,05/31+4)*2";
+	std::string s = "(-2,05\\31—4)*2";
 	std::cout << s;
 	std::cout << "	" << isCorrect(s) << std::endl;
-	std::vector<std::string> v = prepareDataStructures(s);
+	std::cout << s << std::endl;
+	resolve(s);
+	//std::vector<std::string> v = prepareDataStructures(s);
 	//display(v);
-	v = reversePolishNotation(v);
-	display(v);
+	//v = reversePolishNotation(v);
+	//display(v);
 	/*s = " 4 *    a";
 	std::cout << s;
 	std::cout << "	" << isCorrect(s) << std::endl;
@@ -56,15 +60,21 @@ int main() {
 	std::cout << "	" << isCorrect(s) << std::endl;*/
 
 	getchar();
+	getchar();
 	return 0;
 }
 
-void pointToDot(std::string &s) {
+// (',' => '.') & ('\' => '/') & ('—' => '-')
+void conversions(std::string &s) {
 	std::string out{};
 
 	for (char c : s)
 		if (c == ',')
 			out += '.';
+		else if (c == '—')
+			out += '-';
+		else if (c == '\\')
+			out += '/';
 		else
 			out += c;
 	
@@ -80,26 +90,22 @@ bool isCorrect(std::string &s) {
 	std::string LEGAL_CHARACTERS = "()*/-+0987654321^.";
 	bool pointUsed = false,
 		wasOperator = false,
-		wasBracket = false;
+		wasBracket = false,
+		wasOpeningBracket = false;
 
 	removeWhiteSymbols(s);
-	pointToDot(s);
+	conversions(s);
 
 	if (!checkBrackets(s)) {
 		std::cout << "U probably should check brackets, bro. :D" << std::endl;
 		return false;
 	}
 
-	//replace '\' with '/'
-
-	//replace big minus with -
-
-	//TODO No symbol '*' near to brackets - need to add it for processing
-
+	//TODO No symbol '*' near to brackets - need to add it for future processing
 
 	for (char c : s)
 		if (LEGAL_CHARACTERS.find(c) == std::string::npos) {
-			std::cout << "Illegal character... Focus!" << std::endl;
+			std::cout << "Illegal character... Focus! [" << c << ']' << std::endl;
 			return false;
 		}
 		else if (isNumberPart(c)) {
@@ -112,18 +118,32 @@ bool isCorrect(std::string &s) {
 			}
 			wasOperator = false;
 			wasBracket = false;
+			wasOpeningBracket = false;
 		} else if (isOperator(c)) {
 			if (wasOperator) {
 				std::cout << "Two consecutive operators?! C'mon..." << std::endl;
 				return false;
+			} else if (wasOpeningBracket) {
+				if (c != '-') {
+					std::cout << "Operator after opening bracket? Nope..." << std::endl;
+					return false;
+				}
 			}
 			wasOperator = true;
 			pointUsed = false;
 			wasBracket = false;
+			wasOpeningBracket = false;
 		} else if (isBracket(c)) {
-			//TODO one more possibility: ((
-			if (wasBracket)
+			if (wasOpeningBracket && isClosingBracket(c)) {
+				std::cout << "Why U're opening and immediately closing bracket? U don't know? Mee too!" << std::endl;
 				return false;
+			}
+			else if (wasOperator && isClosingBracket(c)) {
+				std::cout << "Operator before closing bracket? Whyyyyyy?!" << std::endl;
+				return false;
+			}
+			if (isOpeningBracket(c))
+				wasOpeningBracket = true;
 			wasOperator = false;
 			pointUsed = false;
 			wasBracket = true;
@@ -138,9 +158,35 @@ void resolve(std::string &equation) {
 		return;
 
 	double result{};
+	std::string item{};
 
 	std::vector<std::string> items = prepareDataStructures(equation);
+	items = reversePolishNotation(items);
+	std::vector<double> numbers{};
+	double number1, number2;
 
+	for (std::vector<std::string>::iterator i = items.begin(); i != items.end(); i++) {
+		item = *i;
+
+		if (isNumberPart(item[0])) {
+			numbers.push_back(std::stod(item));
+		}
+		else if (isOperator(item[0])) {
+			number1 = numbers.back();
+			numbers.pop_back();
+
+			if (!numbers.empty()) {
+				number2 = numbers.back();
+				numbers.pop_back();
+			}
+			else {
+				number2 = 0.0;
+			}
+			result = calculate(number2, number1, item[0]);
+			numbers.push_back(result);
+		}
+	}
+	std::cout << numbers.back() << std::endl;
 }
 
 std::vector<std::string> reversePolishNotation(std::vector<std::string> &equationItems) {
@@ -219,8 +265,10 @@ int priority(char c) {
 	return -1;
 }
 
-//to replace with string
-bool isOperator(char &c) { return (c == '/') || (c == '*') || (c == '-') || (c == '+'); }
+bool isOperator(char &c) {
+	const std::string operations = "/*-+^";
+	return operations.find(c) != std::string::npos;
+}
 
 bool isBracket(char &c) { return isOpeningBracket(c) || isClosingBracket(c); }
 
@@ -255,4 +303,22 @@ void display(std::vector<std::string> &s)
 {
 	for (std::vector<std::string>::iterator i = s.begin(); i != s.end(); i++)
 		std::cout << *i << std::endl;
+}
+
+double calculate(double number1, double number2, char operation) {
+	switch (operation)
+	{
+	case '-':
+		return number1 - number2;
+	case '+':
+		return number1 + number2;
+	case '/':
+		return number1 / number2;
+	case '*':
+		return number1 * number2;
+	case '^':
+		return pow(number1, number2);
+	default:
+		return 0.0;
+	}
 }
