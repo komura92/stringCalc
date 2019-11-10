@@ -49,7 +49,7 @@ int main() {
 	std::cout << s << std::endl;
 	std::cout << result << std::endl << std::endl;
 
-	s = "-2+(-2,05\\31—4)2(3+2)";
+	s = "-2+(-2,05\\31—4)2(3+2)*";
 	std::cout << s << std::endl;
 	result = resolve(s);
 	std::cout << s << std::endl;
@@ -70,6 +70,13 @@ int main() {
 
 
 	s = "  1* 4+	3";
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
+
+
+	s = "-(3*2)*3+7";
 	std::cout << s << std::endl;
 	result = resolve(s);
 	std::cout << s << std::endl;
@@ -116,6 +123,11 @@ bool isCorrect(std::string &s) {
 
 	if (!checkBrackets(s)) {
 		std::cout << "U probably should check brackets, bro. :D" << std::endl;
+		return false;
+	}
+
+	if (isOperator((s[s.length() - 1]))) {
+		std::cout << "Are U sure that's end of this equation? I'm not." << std::endl;
 		return false;
 	}
 
