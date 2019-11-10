@@ -7,7 +7,7 @@ void removeWhiteSymbols(std::string &s);
 
 bool isCorrect(std::string &s);
 
-void resolve(std::string &equation);
+double resolve(std::string &equation);
 
 std::vector<std::string> reversePolishNotation(std::vector<std::string> &equationItems);
 
@@ -36,28 +36,44 @@ void display(std::vector<std::string> &s);
 double calculate(double number1, double number2, char operation);
 
 int main() {
-	std::string s = "(-2,05\\31—4)*2";
-	std::cout << s;
-	std::cout << "	" << isCorrect(s) << std::endl;
+	double result{};
+	std::string s = "-2+(-2,05\\0—4)2(-3+2)";
 	std::cout << s << std::endl;
-	resolve(s);
-	//std::vector<std::string> v = prepareDataStructures(s);
-	//display(v);
-	//v = reversePolishNotation(v);
-	//display(v);
-	/*s = " 4 *    a";
-	std::cout << s;
-	std::cout << "	" << isCorrect(s) << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
+
+	s = "-2+((-2,05\\31—4)2)(3+2)";
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
+
+	s = "-2+(-2,05\\31—4)2(3+2)";
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
+
+	s = " 4.2 *    3";
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
 
 
 	s = "(   2*3)  +6";
-	std::cout << s;
-	std::cout << "	" << isCorrect(s) << std::endl;
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
 
 
 	s = "  1* 4+	3";
-	std::cout << s;
-	std::cout << "	" << isCorrect(s) << std::endl;*/
+	std::cout << s << std::endl;
+	result = resolve(s);
+	std::cout << s << std::endl;
+	std::cout << result << std::endl << std::endl;
 
 	getchar();
 	getchar();
@@ -87,11 +103,13 @@ void removeWhiteSymbols(std::string &s) {
 }
 
 bool isCorrect(std::string &s) {
-	std::string LEGAL_CHARACTERS = "()*/-+0987654321^.";
+	std::string LEGAL_CHARACTERS = "()*/-+0987654321^.",
+		out{};
 	bool pointUsed = false,
 		wasOperator = false,
-		wasBracket = false,
-		wasOpeningBracket = false;
+		wasOpeningBracket = false,
+		wasClosingBracket = false,
+		wasNumber = false;
 
 	removeWhiteSymbols(s);
 	conversions(s);
@@ -101,9 +119,8 @@ bool isCorrect(std::string &s) {
 		return false;
 	}
 
-	//TODO No symbol '*' near to brackets - need to add it for future processing
+	for (char c : s) {
 
-	for (char c : s)
 		if (LEGAL_CHARACTERS.find(c) == std::string::npos) {
 			std::cout << "Illegal character... Focus! [" << c << ']' << std::endl;
 			return false;
@@ -116,24 +133,32 @@ bool isCorrect(std::string &s) {
 				}
 				pointUsed = true;
 			}
+			if (wasClosingBracket)
+				out += '*';
 			wasOperator = false;
-			wasBracket = false;
 			wasOpeningBracket = false;
-		} else if (isOperator(c)) {
+			wasClosingBracket = false;
+			wasNumber = true;
+		}
+		else if (isOperator(c)) {
 			if (wasOperator) {
 				std::cout << "Two consecutive operators?! C'mon..." << std::endl;
 				return false;
-			} else if (wasOpeningBracket) {
+			}
+			else if (wasOpeningBracket) {
 				if (c != '-') {
 					std::cout << "Operator after opening bracket? Nope..." << std::endl;
 					return false;
 				}
+				out += '0';
 			}
 			wasOperator = true;
 			pointUsed = false;
-			wasBracket = false;
 			wasOpeningBracket = false;
-		} else if (isBracket(c)) {
+			wasClosingBracket = false;
+			wasNumber = false;
+		}
+		else if (isBracket(c)) {
 			if (wasOpeningBracket && isClosingBracket(c)) {
 				std::cout << "Why U're opening and immediately closing bracket? U don't know? Mee too!" << std::endl;
 				return false;
@@ -142,20 +167,26 @@ bool isCorrect(std::string &s) {
 				std::cout << "Operator before closing bracket? Whyyyyyy?!" << std::endl;
 				return false;
 			}
-			if (isOpeningBracket(c))
-				wasOpeningBracket = true;
+			wasOpeningBracket = isOpeningBracket(c);
+			if (wasClosingBracket && wasOpeningBracket)
+				out += '*';
+			wasClosingBracket = isClosingBracket(c);
 			wasOperator = false;
 			pointUsed = false;
-			wasBracket = true;
+			if (wasNumber && wasOpeningBracket)
+				out += '*';
+			wasNumber = false;
 		}
-
+		out += c;
+	}
+	s = out;
 	return true;
 }
 
-void resolve(std::string &equation) {
+double resolve(std::string &equation) {
 
 	if (!isCorrect(equation))
-		return;
+		return 0.0;
 
 	double result{};
 	std::string item{};
@@ -186,7 +217,7 @@ void resolve(std::string &equation) {
 			numbers.push_back(result);
 		}
 	}
-	std::cout << numbers.back() << std::endl;
+	return numbers.back();
 }
 
 std::vector<std::string> reversePolishNotation(std::vector<std::string> &equationItems) {
@@ -218,10 +249,9 @@ std::vector<std::string> reversePolishNotation(std::vector<std::string> &equatio
 		}
 	}
 
-	for (std::vector<std::string>::iterator i = stack.begin();
-		i != stack.end();
-		i++) {
-		out.push_back(*i);
+	while (!stack.empty()) {
+		out.push_back(stack.back());
+		stack.pop_back();
 	}
 
 	return out;
